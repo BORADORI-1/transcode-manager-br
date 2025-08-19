@@ -1,0 +1,33 @@
+{
+    "smc_db": {
+        "master": {
+            "connectionLimit" : "30",
+            "host" : "127.0.0.1",
+            "port" : 3306,
+            "user": "transcoder",
+            "password": "transcoder",
+            "database": "transcoding"
+        },
+        "backup": {
+            "connectionLimit" : "30",
+            "host" : "127.0.0.1",
+            "port" : 3306,
+            "user": "transcoder",
+            "password": "transcoder",
+            "database": "transcoding"
+        }
+    },
+    "acquire_sequence": {
+        "min": 11,
+        "max": 11
+    },
+    "listenPort":1084,
+    "smc_clipinfo_request_url": "http://api-test.solbox.com/api/contentsList",
+    "smc_clipinfo_report_url": "http://api-test.solbox.com/api/acquirereport",
+    "media_check_url" : "http://mediaapi-test.solbox.com/api/v1/media/check.sb",
+    "default_alert_group": ["acquire.sd"],
+    "process_type": "master",
+    "runmode" : "dev",
+    "log_path": "/usr/service/logs/data_manager",
+    "log_level": "debug"
+}

@@ -1,0 +1,69 @@
+SHELL = /bin/sh
+
+BASE            = $(shell pwd | sed -e 's/data_manager$$/data_manager/g' )
+#BASE		= $(shell pwd | sed -e 's/mod_stat_send.*/mod_stat_send/g')
+BIN             = $(BASE)/bin
+SRC_DIR         = $(BASE)
+
+TAR_CMD         = tar cvfz $(TAG_PATH)/$(PROGRAM)-$(VERSION).tar.gz '--exclude=.svn' '--exclude=*.o' ./$(PROGRAM)-$(VERSION)/*
+#################################################################################
+# Environments
+##################################################################################
+#ARCH=$(shell uname -m)
+ARCH=noarch
+
+#TAG_PATH=$(shell pwd | sed -e 's/trunk\/.*/tags/g')
+TAG_PATH=$(shell pwd | sed -e 's/combine.*/combine\/tags/g')
+TAG_NAME=$(PROGRAM)-$(VERSION)-r$(RELEASE)
+ifndef TAG_MSG
+TAG_MSG="Automatically tagged & commited $(TAG_NAME)."
+endif
+ifdef BUILD_MSG
+TAG_NAME=$(PROGRAM)-$(VERSION)-r$(RELEASE)-$(BUILD_MSG)
+endif
+TAR_POOL=$(BASE)/pool
+
+#RPMBUILDROOT=/usr/src/redhat/
+RPMBUILDROOT=~/rpmbuild
+SPECFILE=data_manager.spec
+PROGRAM=$(shell grep ^Name: $(SRC_DIR)/$(SPECFILE) | awk '{print $$2}')
+VERSION=$(shell grep ^Version: $(SRC_DIR)/$(SPECFILE) | awk '{print $$2}')
+MINOR_VERSION=$(shell grep ^Version: $(SRC_DIR)/$(SPECFILE) | awk '{print $$2}'| sed -e 's/^.*\.//g')
+MAJOR_VERSION=$(shell grep ^Version: $(SRC_DIR)/$(SPECFILE) | awk '{print $$2}'| sed -e 's/\..*$$//g')
+#RELEASE=$(shell grep ^Release: $(SRC_DIR)/$(SPECFILE) | awk '{print $$2}' | sed -e 's/\.%.*//g')
+#RELEASE=$(shell unset LANG LC_ALL;svn up | grep -v 'Updating' | awk '{print $$3}' | sed -e 's/\.$$//g')
+RELEASE=$(shell fgrep '%define revision' $(SRC_DIR)/$(SPECFILE) | awk '{print $$3}')
+#DISTVER=$(shell rpm -q --queryformat='%{VERSION}' centos-release 2> /dev/null | tr . : | sed s/://g)
+#DISTVER=$(shell rpm -q --queryformat='%{VERSION}' centos-release 2> /dev/null | tr . : | sed s/://g)
+#DISTTAG=el$(strip $(DISTVER))
+DISTTAG=el8
+BUILDDATE=$(shell date '+%Y%m%d%H%M%S')
+VERSION_STRING="$(PROGRAM) $(VERSION) $(BUILDDATE) (Red Hat $(VERSION)-$(RELEASE)"
+
+all: rpm
+
+tag:
+	@test ! -z $(TAG_PATH)/$(TAG_NAME) || ( echo "$(TAG_NAME) already tagged $(TAG_PATH)/$(TAG_NAME)" && exit 1; )
+	@svn export $(BASE) $(TAG_PATH)/$(TAG_NAME) --force
+#	@cp -rf $(BASE) $(TAG_PATH)/$(TAG_NAME)
+ifdef COMMIT
+	@test -z $(TAG_PATH)/$(TAG_NAME) || svn add $(TAG_PATH)/$(TAG_NAME)
+	@test -z $(TAG_PATH)/$(TAG_NAME) || svn ci $(TAG_PATH)/$(TAG_NAME) -m $(TAG_MSG)
+	@test -z $(TAG_PATH)/$(TAG_NAME) || echo "Automatically tagged $(TAG_NAME) to SVN."
+endif
+
+$(PROGRAM)-$(VERSION).tar.gz: tag
+	cd $(TAG_PATH) && ln -sf $(TAG_NAME) ./$(PROGRAM)-$(VERSION)
+	cd $(TAG_PATH) && $(TAR_CMD)
+	cd $(TAG_PATH) && unlink ./$(PROGRAM)-$(VERSION)
+
+rpm: $(PROGRAM)-$(VERSION).tar.gz
+	cp -f $(TAG_PATH)/$(PROGRAM)-$(VERSION).tar.gz $(RPMBUILDROOT)/SOURCES/
+	rpmbuild -ba $(TAG_PATH)/$(TAG_NAME)/$(SPECFILE)
+	@test ! -e $(RPMBUILDROOT)/RPMS/$(ARCH)/$(PROGRAM)-$(VERSION)-$(RELEASE).$(DISTTAG).$(ARCH).rpm || cp $(RPMBUILDROOT)/RPMS/$(ARCH)/$(PROGRAM)-$(VERSION)-$(RELEASE).$(DISTTAG).$(ARCH).rpm $(TAG_PATH)/$(TAG_NAME)/../
+	@test ! -e $(TAG_PATH)/$(TAG_NAME)/../$(PROGRAM)-$(VERSION)-$(RELEASE).$(DISTTAG).$(ARCH).rpm || echo "succecssfully packaging rpm $(TAG_PATH)/$(TAG_NAME)/../$(PROGRAM)-$(VERSION)-$(RELEASE).$(DISTTAG).$(ARCH).rpm"
+
+rpm_test:
+	@echo $(BASE)
+	@echo $(SRC_DIR)
+	@echo "svn export $(BASE) $(TAG_PATH)/$(TAG_NAME) --force"

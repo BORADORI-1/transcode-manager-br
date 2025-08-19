@@ -1,0 +1,30 @@
+{
+    "smc_db": {
+        "master": {
+            "connectionLimit" : "30",
+            "host" : "192.168.110.61",
+            "port" : 3306,
+            "user": "ics2admin",
+            "password": "ics!akstp",
+            "database": "transcoding"
+        },
+        "backup": {
+            "connectionLimit" : "30",
+            "host" : "192.168.110.61",
+            "port" : 3306,
+            "user": "ics2admin",
+            "password": "ics!akstp",
+            "database": "transcoding"
+        }
+    },
+    "copy": {
+        "src": "/stg/tagstory",
+        "dest": "/stg/dest"
+    },
+    "smc_clipinfo_request_url": "http://api-test.solbox.com/api/contentsList",
+    "smc_clipinfo_report_url": "http://api-test.solbox.com/api/acquirereport",
+    "default_alert_group": ["test.disabled"],
+    "process_type": "master",
+    "log_path": "/usr/service/logs/data_manager",
+    "log_level": "debug"
+}
